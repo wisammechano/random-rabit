@@ -1,13 +1,18 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button, Modal, Form, Selector } from "../comps";
-import Router from "next/router";
+import { useHistory } from "react-router-dom";
 import styled from "styled-components";
 import { setLocalStorage, getLocalStorage } from "../utils/storage";
 
 const Home = () => {
   return (
     <div>
-      <AppTitle>Random Rabbit 🐇</AppTitle>
+      <AppTitle>
+        Random Rabbit{" "}
+        <span role="img" aria-label="icon">
+          🐇
+        </span>
+      </AppTitle>
       <App />
     </div>
   );
@@ -29,6 +34,7 @@ const App = () => {
   const [showModal, toggleModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [editing, setIsEditing] = useState(null);
+  const history = useHistory();
 
   useEffect(() => {
     const data = getLocalStorage();
@@ -99,7 +105,11 @@ const App = () => {
             <Button
               green
               onClick={() =>
-                Router.push("/app/[id]", `/app/${selectedGroup.id}`)
+                history.push(
+                  `/app/${selectedGroup.name.toLowerCase().replace(" ", "-")}-${
+                    selectedGroup.id
+                  }`
+                )
               }
             >
               Go!

@@ -1,20 +1,23 @@
-import { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 
 import styled from "styled-components";
 
 export const Modal = ({ show, toggleHandler, children }) => {
-  const escFunction = useCallback((e) => {
-    if (e.keyCode === 27) {
-      toggleHandler(false);
-    }
-  }, []);
+  const escFunction = useCallback(
+    (e) => {
+      if (e.keyCode === 27) {
+        toggleHandler(false);
+      }
+    },
+    [toggleHandler]
+  );
 
   useEffect(() => {
     document && document.addEventListener("keydown", escFunction, false);
     return () => {
       document && document.removeEventListener("keydown", escFunction, false);
     };
-  }, []);
+  }, [escFunction]);
 
   return (
     <>

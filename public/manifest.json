@@ -1,5 +1,6 @@
 {
-  "name": "Random Rabbit",
+  "short_name": "Random Rabbit",
+  "name": "Random Rabbit - Students Random Selector",
   "icons": [{
       "src": "/assets/android-icon-36x36.png",
       "sizes": "36x36",
@@ -36,5 +37,9 @@
       "type": "image/png",
       "density": "4.0"
     }
-  ]
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
 }

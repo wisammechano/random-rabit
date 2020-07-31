@@ -25,7 +25,7 @@ export const Selector = ({
     document.addEventListener("click", hideOptions, false);
 
     return () => document.removeEventListener("click", hideOptions);
-  }, [showDropdown]);
+  }, [showDropdown, hideOptions]);
 
   return (
     <Wrapper onClick={() => setShowDropdown(!showDropdown)}>
