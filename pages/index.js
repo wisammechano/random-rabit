@@ -1,203 +1,231 @@
-import Head from 'next/head'
+import { useState, useRef, useEffect } from "react";
+import { Button, Modal, Form, Selector } from "../comps";
+import Router from "next/router";
+import styled from "styled-components";
+import { setLocalStorage, getLocalStorage } from "../utils/storage";
 
-const Home = () => (
-  <div className="container">
-    <Head>
-      <title>Create Next App</title>
-      <link rel="icon" href="/favicon.ico" />
-    </Head>
+const Home = () => {
+  return (
+    <div>
+      <AppTitle>Random Rabbit 🐇</AppTitle>
+      <App />
+    </div>
+  );
+};
 
-    <main>
-      <h1 className="title">
-        Welcome to <a href="https://nextjs.org">Next.js!</a>
-      </h1>
+const AppTitle = styled.h1`
+   {
+    font-size: 3rem;
+    margin-top: 8rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+`;
 
-      <p className="description">
-        Get started by editing <code>pages/index.js</code>
-      </p>
+export default Home;
 
-      <div className="grid">
-        <a href="https://nextjs.org/docs" className="card">
-          <h3>Documentation &rarr;</h3>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+const App = () => {
+  const [groups, setGroups] = useState([]);
+  const [showModal, toggleModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [editing, setIsEditing] = useState(null);
 
-        <a href="https://nextjs.org/learn" className="card">
-          <h3>Learn &rarr;</h3>
-          <p>Learn about Next.js in an interactive course with quizzes!</p>
-        </a>
+  useEffect(() => {
+    const data = getLocalStorage();
+    setGroups(data.groups);
+    setSelectedGroup(data.groups[0]);
+  }, []);
 
-        <a
-          href="https://github.com/zeit/next.js/tree/master/examples"
-          className="card"
-        >
-          <h3>Examples &rarr;</h3>
-          <p>Discover and deploy boilerplate example Next.js projects.</p>
-        </a>
+  const showGroupEditor = () => {
+    toggleModal(true);
+  };
 
-        <a
-          href="https://zeit.co/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          className="card"
-        >
-          <h3>Deploy &rarr;</h3>
-          <p>
-            Instantly deploy your Next.js site to a public URL with ZEIT Now.
-          </p>
-        </a>
-      </div>
-    </main>
+  const saveGroup = (group) => {
+    const data = getLocalStorage() || { groups: [] };
 
-    <footer>
-      <a
-        href="https://zeit.co?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Powered by <img src="/zeit.svg" alt="ZEIT Logo" />
-      </a>
-    </footer>
+    if (editing) {
+      const original = data.groups.filter((g) => g.id === group.id)[0];
+      const idx = data.groups.indexOf(original);
+      data.groups.splice(idx, 1, group);
+      setIsEditing(null);
+    } else {
+      group.id = data.groups.length;
+      data.groups.push(group);
+    }
+    setLocalStorage(data);
+    setGroups(data.groups);
+    setSelectedGroup(group);
+  };
 
-    <style jsx>{`
-      .container {
-        min-height: 100vh;
-        padding: 0 0.5rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-      }
+  const handleEdit = () => {
+    setIsEditing(selectedGroup);
+    toggleModal(true);
+  };
 
-      main {
-        padding: 5rem 0;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-      }
+  const handleDelete = () => {
+    const data = getLocalStorage();
+    const original = data.groups.filter((g) => g.id === selectedGroup.id)[0];
+    const idx = data.groups.indexOf(original);
+    data.groups.splice(idx, 1);
+    setLocalStorage(data);
+    setGroups(data.groups);
+    setSelectedGroup(data.groups[0]);
+  };
 
-      footer {
-        width: 100%;
-        height: 100px;
-        border-top: 1px solid #eaeaea;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
+  return (
+    <Container>
+      {groups.length > 0 && (
+        <>
+          <h3>Select Group</h3>
+          <Flex row>
+            <Selector
+              items={groups}
+              onItemSelected={(item) => setSelectedGroup(item)}
+              title={(group) => `${group.name} (${group.members.length})`}
+              identifier={(group) => group.id}
+              selected={selectedGroup}
+            />
+            <Button small blue onClick={handleEdit}>
+              Edit
+            </Button>
+            <Button small red onClick={handleDelete}>
+              Delete
+            </Button>
+            <Button small onClick={() => showGroupEditor()}>
+              Add
+            </Button>
+          </Flex>
+          <div>
+            <Button
+              green
+              onClick={() =>
+                Router.push("/app/[id]", `/app/${selectedGroup.id}`)
+              }
+            >
+              Go!
+            </Button>
+          </div>
+        </>
+      )}
 
-      footer img {
-        margin-left: 0.5rem;
-      }
+      {groups.length === 0 && (
+        <div>
+          <Button onClick={() => showGroupEditor()}>Add Group</Button>
+        </div>
+      )}
 
-      footer a {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
+      <GroupEditor
+        show={showModal}
+        toggleHandler={(show) => {
+          toggleModal(show);
+          setIsEditing(null);
+        }}
+        group={editing}
+        handleSubmit={saveGroup}
+      />
+    </Container>
+  );
+};
 
-      a {
-        color: inherit;
-        text-decoration: none;
-      }
+const Container = styled.div`
+  width: ${(props) => props.width || 600};
+  margin: 1rem auto;
+  text-align: center;
+`;
 
-      .title a {
-        color: #0070f3;
-        text-decoration: none;
-      }
+const Flex = styled.div`
+  display: flex;
+  flex-direction: ${(props) => (props.col ? "column" : "row")};
+  align-items: center;
+  justify-content: center;
+`;
 
-      .title a:hover,
-      .title a:focus,
-      .title a:active {
-        text-decoration: underline;
-      }
+const GroupEditor = ({ group, ...props }) => {
+  const [form, setForm] = useState({ name: "", members: [] });
 
-      .title {
-        margin: 0;
-        line-height: 1.15;
-        font-size: 4rem;
-      }
+  const membersInput = useRef(null);
 
-      .title,
-      .description {
-        text-align: center;
-      }
+  useEffect(() => {
+    if (group) {
+      setForm(group);
+      membersInput.current.innerText = group.members.join("\n");
+    }
+  }, [group]);
 
-      .description {
-        line-height: 1.5;
-        font-size: 1.5rem;
-      }
+  const handlePaste = (e) => {
+    e.preventDefault();
 
-      code {
-        background: #fafafa;
-        border-radius: 5px;
-        padding: 0.75rem;
-        font-size: 1.1rem;
-        font-family: Menlo, Monaco, Lucida Console, Liberation Mono,
-          DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace;
-      }
+    let clip = (e.originalEvent || e).clipboardData.getData("text/plain");
 
-      .grid {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: wrap;
+    clip = clip
+      .split(/\r\n?|\n/gi)
+      .map((line) => line.trim())
+      .join("\n");
 
-        max-width: 800px;
-        margin-top: 3rem;
-      }
+    clip && document.execCommand("insertText", false, clip);
+  };
 
-      .card {
-        margin: 1rem;
-        flex-basis: 45%;
-        padding: 1.5rem;
-        text-align: left;
-        color: inherit;
-        text-decoration: none;
-        border: 1px solid #eaeaea;
-        border-radius: 10px;
-        transition: color 0.15s ease, border-color 0.15s ease;
-      }
+  const handleNames = (e) => {
+    const input = e.target.innerText
+      .split(/\r\n?|\n/gi)
+      .map((name) => name.trim())
+      .filter((name) => name !== "");
 
-      .card:hover,
-      .card:focus,
-      .card:active {
-        color: #0070f3;
-        border-color: #0070f3;
-      }
+    setForm({ ...form, members: [...input] });
+  };
 
-      .card h3 {
-        margin: 0 0 1rem 0;
-        font-size: 1.5rem;
-      }
+  const reset = () => {
+    setForm({ ...form, name: "", members: [] });
+    membersInput.current.innerText = "";
+  };
 
-      .card p {
-        margin: 0;
-        font-size: 1.25rem;
-        line-height: 1.5;
-      }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (form.name.length >= 3) {
+      props.handleSubmit(form);
+    }
+    onDismiss();
+  };
 
-      @media (max-width: 600px) {
-        .grid {
-          width: 100%;
-          flex-direction: column;
-        }
-      }
-    `}</style>
+  const onDismiss = () => {
+    reset();
+    props.toggleHandler();
+  };
 
-    <style jsx global>{`
-      html,
-      body {
-        padding: 0;
-        margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-          Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-      }
+  return (
+    <Modal show={props.show} toggleHandler={onDismiss}>
+      <Form onReset={reset} onSubmit={handleSubmit}>
+        <label htmlFor="group-name">Group Name</label>
+        <input
+          id="group-name"
+          type="text"
+          placeholder="Enter Name"
+          required={true}
+          autoComplete="off"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+        <label htmlFor="group-members">
+          Group Members {<span>({form.members.length})</span>}
+        </label>
+        <div
+          onPaste={handlePaste}
+          id="group-members"
+          placeholder="Enter each name in a separate line"
+          contentEditable="true"
+          autoCapitalize="false"
+          autoCorrect="false"
+          spellCheck="false"
+          onInput={handleNames}
+          onBlur={handleNames}
+          ref={membersInput}
+        />
 
-      * {
-        box-sizing: border-box;
-      }
-    `}</style>
-  </div>
-)
-
-export default Home
+        <div style={{ textAlign: "right", margin: "0.5rem" }}>
+          <Button red as="input" type="reset" value="Clear" tabIndex={-1} />
+          <Button as="input" type="submit" value="Save" />
+        </div>
+      </Form>
+    </Modal>
+  );
+};
